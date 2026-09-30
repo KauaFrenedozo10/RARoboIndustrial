@@ -1,59 +1,46 @@
-import json
-import os
-import random
-import time
-from datetime import datetime, timezone
 
 import paho.mqtt.client as mqtt
+import random
+import time
 
-MQTT_HOST = os.environ.get("MQTT_HOST", "localhost")
-MQTT_PORT = int(os.environ.get("MQTT_PORT", "1883"))
-INTERVALO = float(os.environ.get("INTERVALO", "2"))
+cliente = mqtt.Client()
 
-maquinas = {
-    "prensa-01": {"nome": "Prensa Hidraulica", "temperatura": 70.0, "rpm": 1200},
-    "torno-02": {"nome": "Torno CNC", "temperatura": 65.0, "rpm": 2400},
-    "esteira-03": {"nome": "Esteira Principal", "temperatura": 50.0, "rpm": 300},
-}
+while True:
+    try:
+        cliente.connect("mqtt", 1883, 60)
+        break
+    except Exception:
+        print("Aguardando broker MQTT...")
+        time.sleep(3)
 
+cliente.loop_start()
 
-def conectar():
-    client = mqtt.Client(mqtt.CallbackAPIVersion.VERSION2)
-    while True:
-        try:
-            client.connect(MQTT_HOST, MQTT_PORT, 60)
-            break
-        except OSError:
-            print("Aguardando broker MQTT...")
-            time.sleep(2)
-    client.loop_start()
-    return client
+while True:
+    temperatura = round(random.uniform(20, 50), 2)
+    vibracao = round(random.uniform(0.1, 5.0), 2)
 
+    if temperatura > 45:
+        status = "atencao"
+    else:
+        status = "operando"
 
-def proxima_leitura(maquina_id, estado):
-    estado["temperatura"] += random.uniform(-2.0, 2.5)
-    estado["temperatura"] = max(40.0, min(105.0, estado["temperatura"]))
-    estado["rpm"] = max(0, estado["rpm"] + random.randint(-40, 40))
-    return {
-        "id": maquina_id,
-        "nome": estado["nome"],
-        "temperatura": round(estado["temperatura"], 1),
-        "vibracao": round(random.uniform(0.5, 6.5), 2),
-        "rpm": estado["rpm"],
-        "timestamp": datetime.now(timezone.utc).isoformat(),
-    }
+    cliente.publish(
+        "industria/ROBO-01/temperatura",
+        str(temperatura)
+    )
 
+    cliente.publish(
+        "industria/ROBO-01/vibracao",
+        str(vibracao)
+    )
 
-def main():
-    client = conectar()
-    print("Simulador iniciado.")
-    while True:
-        for maquina_id, estado in maquinas.items():
-            leitura = proxima_leitura(maquina_id, estado)
-            client.publish(f"industria/{maquina_id}/telemetria", json.dumps(leitura))
-            print(f"{maquina_id}: {leitura['temperatura']} C")
-        time.sleep(INTERVALO)
+    cliente.publish(
+        "industria/ROBO-01/status",
+        status
+    )
 
+    print("Temperatura:", temperatura)
+    print("Vibração:", vibracao)
+    print("Status:", status)
 
-if __name__ == "__main__":
-    main()
+    time.sleep(5)
