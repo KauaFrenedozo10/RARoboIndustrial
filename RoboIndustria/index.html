@@ -12,7 +12,7 @@
 </head>
 <body>
   <a-scene projetor-hotspots
-           mindar-image="imageTargetSrc: ./frontend/assets/targets/targets.mind; uiLoading: no; uiScanning: no; uiError: no;"
+           mindar-image="imageTargetSrc: ./frontend/assets/targets/targets.mind; uiLoading: yes; uiScanning: yes; uiError: yes;"
            color-space="sRGB"
            renderer="colorManagement: true, physicallyCorrectLights: true"
            vr-mode-ui="enabled: false"
@@ -23,6 +23,7 @@
 
   <div id="camada-hotspots" class="camada-hotspots"></div>
   <header id="estado" class="estado">Carregando câmera…</header>
+  <img id="miniatura" class="miniatura" src="./frontend/assets/images/target.png" alt="Imagem a ser escaneada">
 
   <section id="painel" class="painel" hidden>
     <header class="painel-topo">

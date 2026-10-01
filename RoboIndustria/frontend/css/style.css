@@ -52,3 +52,9 @@ body { margin: 0; overflow: hidden; font-family: system-ui, sans-serif; color: v
   padding: 2px 8px; border-radius: 999px; background: var(--fundo);
   font-size: 12px; white-space: nowrap; pointer-events: none;
 }
+
+.miniatura {
+  position: fixed; left: 12px; bottom: calc(env(safe-area-inset-bottom, 0px) + 12px);
+  width: 96px; border: 2px solid #fff; border-radius: 8px; z-index: 20; background: var(--fundo);
+}
+.miniatura[hidden] { display: none; }

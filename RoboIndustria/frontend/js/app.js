@@ -12,6 +12,7 @@
   const TEXTOS = Object.freeze({
     aguardandoAlvo: "Aponte a câmera para o target",
     raAtiva: "RA ATIVA",
+    erroCamera: "Erro ao iniciar a câmera/RA",
     consultando: "Consultando a API…",
     indisponivel:
       "⚠ Não foi possível consultar os dados do equipamento. " +
@@ -103,6 +104,7 @@
     ui.estado.textContent = ativo ? TEXTOS.raAtiva : TEXTOS.aguardandoAlvo;
     ui.estado.classList.toggle("ativo", ativo);
     ui.camada.classList.toggle("visivel", ativo);
+    ui.miniatura.hidden = ativo;
   }
 
   // ---------- API ----------
@@ -161,6 +163,7 @@
     ui.alvo = document.getElementById("alvo");
     ui.camada = document.getElementById("camada-hotspots");
     ui.estado = document.getElementById("estado");
+    ui.miniatura = document.getElementById("miniatura");
     ui.painel = document.getElementById("painel");
     ui.painelTitulo = document.getElementById("painel-titulo");
     ui.painelCorpo = document.getElementById("painel-corpo");
@@ -171,7 +174,11 @@
     document.getElementById("painel-fechar").addEventListener("pointerup", () => {
       ui.painel.hidden = true;
     });
-    definirEstadoRA(false);
+    const cena = document.querySelector("a-scene");
+    cena.addEventListener("arReady", () => definirEstadoRA(false));
+    cena.addEventListener("arError", () => {
+      ui.estado.textContent = TEXTOS.erroCamera;
+    });
   }
 
   document.addEventListener("DOMContentLoaded", iniciar);

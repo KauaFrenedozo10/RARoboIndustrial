@@ -42,7 +42,9 @@ services:
     restart: unless-stopped
 
   frontend:
-    build: ./frontend
+    build:
+      context: .
+      dockerfile: frontend/Dockerfile
     ports:
       - "8080:80"    # HTTP  (teste no computador)
       - "8443:443"   # HTTPS (necessário para a câmera no celular)
