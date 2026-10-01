@@ -1,0 +1,51 @@
+name: industria-ra-cloud
+
+services:
+  mqtt:
+    image: eclipse-mosquitto:2
+    ports: ["1883:1883"]
+    volumes:
+      - ./mqtt/mosquitto.conf:/mosquitto/config/mosquitto.conf:ro
+    healthcheck:
+      test: ["CMD-SHELL", "mosquitto_sub -h localhost -t '$$SYS/#' -C 1 -W 3 >/dev/null 2>&1"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    restart: unless-stopped
+
+  api:
+    build: ./backend
+    environment:
+      MQTT_HOST: mqtt
+      MQTT_PORTA: "1883"
+    ports: ["5000:5000"]
+    depends_on:
+      mqtt:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request as u; u.urlopen('http://localhost:5000/api/saude')"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+    restart: unless-stopped
+
+  simulator:
+    build: ./simulator
+    environment:
+      MQTT_HOST: mqtt
+      MQTT_PORTA: "1883"
+      EQUIPAMENTO_ID: CNC-01
+      INTERVALO_SEGUNDOS: "2"
+    depends_on:
+      mqtt:
+        condition: service_healthy
+    restart: unless-stopped
+
+  frontend:
+    build: ./frontend
+    ports:
+      - "8080:80"    # HTTP  (teste no computador)
+      - "8443:443"   # HTTPS (necessário para a câmera no celular)
+    depends_on:
+      - api
+    restart: unless-stopped
