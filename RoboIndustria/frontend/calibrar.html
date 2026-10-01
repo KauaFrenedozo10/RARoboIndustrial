@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Calibrador de hotspots</title>
+  <style>
+    body { font-family: system-ui, sans-serif; margin: 16px; background: #0f172a; color: #f1f5f9; }
+    #area { position: relative; display: inline-block; max-width: 100%; }
+    #area img { display: block; max-width: 100%; cursor: crosshair; }
+    .ponto { position: absolute; width: 28px; height: 28px; margin: -14px 0 0 -14px; border-radius: 50%;
+             background: #22d3ee; color: #0f172a; font-weight: 700; text-align: center; line-height: 28px; pointer-events: none; }
+    textarea { width: 100%; height: 220px; margin-top: 12px; font-family: monospace; }
+    button { padding: 8px 14px; margin-right: 8px; }
+  </style>
+</head>
+<body>
+  <h1>Calibrador de hotspots</h1>
+  <p>Clique na imagem do target, na ordem dos hotspots do <code>js/ativo.js</code> (1, 2, 3…).
+     Depois copie as posições abaixo para o campo <code>posicao</code> de cada hotspot.</p>
+  <div id="area"><img id="imagem" src="assets/images/target.png" alt="Imagem do target"></div>
+  <div><button id="desfazer" type="button">Desfazer último</button><button id="limpar" type="button">Limpar</button></div>
+  <textarea id="saida" readonly></textarea>
+  <script>
+    const imagem = document.getElementById("imagem");
+    const area = document.getElementById("area");
+    const saida = document.getElementById("saida");
+    const pontos = []; // { fx, fy } em fração da imagem (0 a 1)
+
+    const arredondar = (n) => Math.round(n * 100) / 100;
+
+    function paraCoordenadaDoTarget({ fx, fy }, proporcao) {
+      return { x: arredondar(fx - 0.5), y: arredondar((0.5 - fy) * proporcao) };
+    }
+
+    function desenhar() {
+      area.querySelectorAll(".ponto").forEach((p) => p.remove());
+      const proporcao = imagem.naturalHeight / imagem.naturalWidth;
+      saida.value = pontos.map((ponto, i) => {
+        const marca = document.createElement("div");
+        marca.className = "ponto";
+        marca.textContent = i + 1;
+        marca.style.left = `${ponto.fx * 100}%`;
+        marca.style.top = `${ponto.fy * 100}%`;
+        area.appendChild(marca);
+        const { x, y } = paraCoordenadaDoTarget(ponto, proporcao);
+        return `// hotspot ${i + 1}\nposicao: { x: ${x}, y: ${y} },`;
+      }).join("\n");
+    }
+
+    imagem.addEventListener("click", (evento) => {
+      const caixa = imagem.getBoundingClientRect();
+      pontos.push({
+        fx: (evento.clientX - caixa.left) / caixa.width,
+        fy: (evento.clientY - caixa.top) / caixa.height,
+      });
+      desenhar();
+    });
+    document.getElementById("desfazer").addEventListener("click", () => { pontos.pop(); desenhar(); });
+    document.getElementById("limpar").addEventListener("click", () => { pontos.length = 0; desenhar(); });
+  </script>
+</body>
+</html>
